@@ -10,7 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: jni.mlp,v 1.1 2001-06-05 12:19:55 xleroy Exp $ *)
+(* $Id: jni.mlp,v 1.2 2001-06-05 14:01:06 xleroy Exp $ *)
 
 (* Low-level Java interface (JNI level) *)
 
@@ -18,13 +18,13 @@ external init: string -> unit = "camljava_Init"
 external shutdown: unit -> unit = "camljava_Shutdown"
 
 let _ =
-  let bootpath = "%PATH%" in  
-  begin try
-    let path = Sys.getenv "CLASSPATH" in
-    init (path ^ ":" ^ bootpath)
-  with Not_found ->
-    init bootpath
-  end;
+  let libpath = "%PATH%" in  
+  let path =
+    try
+      Sys.getenv "CLASSPATH" ^ ":" ^ libpath
+    with Not_found ->
+      libpath in
+  init path;
   at_exit shutdown
 
 type obj

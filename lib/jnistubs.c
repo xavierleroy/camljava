@@ -646,14 +646,19 @@ value camljava_Init(value vclasspath)
 {
   JDK1_1InitArgs vm_args; /* JDK 1.1 VM initialization arguments */
   int retcode;
+  char * classpath;
 
   /* Get the default initialization arguments and set the class path */
   vm_args.version = JNI_VERSION_1_1;
   JNI_GetDefaultJavaVMInitArgs(&vm_args);
-  vm_args.classpath = String_val(vclasspath);
+  classpath = stat_alloc(strlen(vm_args.classpath) + 1 +
+                         string_length(vclasspath) + 1);
+  sprintf(classpath, "%s:%s", vm_args.classpath, String_val(vclasspath));
+  vm_args.classpath = classpath;
   /* Load and initialize a Java VM, return a JNI interface pointer in env */
   retcode = JNI_CreateJavaVM(&jvm, (void **) &jenv, &vm_args);
-  if (retcode != 0) failwith("Java.init");
+  stat_free(classpath);
+  if (retcode < 0) failwith("Java.init");
   return Val_unit;
 }
 

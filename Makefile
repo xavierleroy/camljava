@@ -3,3 +3,6 @@ all:
 
 install:
 	cd lib; make install
+
+clean:
+	cd lib; make clean

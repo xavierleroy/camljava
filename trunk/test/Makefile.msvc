@@ -1,0 +1,20 @@
+include ../Makefile.config
+
+CAMLJAVA=`ocamlc -where`/camljava/camljava.jar
+
+all: jnitest.exe Test.class Testcb.class
+	CLASSPATH="." ./jnitest
+
+jnitest.exe: jnitest.ml
+	ocamlc -ccopt /Zi -o jnitest.exe -I +camljava jni.cma jnitest.ml
+
+clean::
+	rm -f jnitest.exe
+
+.SUFFIXES: .java .class
+
+.java.class:
+	$(JAVAC) -classpath "$(CAMLJAVA);." $*.java
+
+clean::
+	rm -f *.cm?

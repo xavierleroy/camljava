@@ -1,0 +1,14 @@
+MK=$(MAKE) -f Makefile.msvc
+
+all:
+	cd lib; $(MK) all
+
+install:
+	cd lib; $(MK) install
+
+tst:
+	cd test; $(MK)
+
+clean:
+	cd lib; $(MK) clean
+	cd test; $(MK) clean

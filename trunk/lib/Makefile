@@ -30,13 +30,9 @@ clean::
 
 jni.ml: jni.mlp jni.mli ../Makefile.config
 	rm -f jni.ml
-	sed -n -e '/^(\*begin common/,/^(\*end common/p' \
-                jni.mli > jni.common.tmp
-	sed -e 's|%PATH%|$(BOOTCLASSPATH):'$(CAMLJAVALIB)/camljava.jar'|' \
-            -e '/^(\*common/r jni.common.tmp' \
+	sed -e 's|%PATH%|'$(CAMLJAVALIB)/camljava.jar'|' \
                 jni.mlp > jni.ml
 	chmod -w jni.ml
-	rm jni.common.tmp
 
 clean::
 	rm -f jni.ml

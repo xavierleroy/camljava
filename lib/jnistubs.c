@@ -289,7 +289,7 @@ enum {
   Tag_Long,
   Tag_Float,
   Tag_Double,
-  Tag_Object,
+  Tag_Object
 };
 
 static void jvalue_val(value v, /*out*/ jvalue * j)
@@ -308,11 +308,18 @@ static void jvalue_val(value v, /*out*/ jvalue * j)
   }
 }
 
-static jvalue * convert_args(value vargs)
+#define NUM_DEFAULT_ARGS 8
+
+static jvalue * convert_args(value vargs, jvalue default_args[])
 {
   mlsize_t nargs = Wosize_val(vargs);
-  jvalue * args = stat_alloc(nargs * sizeof(jvalue));
+  jvalue * args;
   mlsize_t i;
+
+  if (nargs <= NUM_DEFAULT_ARGS)
+    args = default_args;
+  else
+    args = stat_alloc(nargs * sizeof(jvalue));
   for (i = 0; i < nargs; i++) jvalue_val(Field(vargs, i), &(args[i]));
   return args;
 }
@@ -322,12 +329,13 @@ static jvalue * convert_args(value vargs)
 #define CALLMETHOD(callname,restyp,resconv)                                 \
 value camljava_##callname(value vobj, value vmeth, value vargs)             \
 {                                                                           \
+  jvalue default_args[NUM_DEFAULT_ARGS];                                    \
   jvalue * args;                                                            \
   restyp res;                                                               \
   check_non_null(vobj);                                                     \
-  args = convert_args(vargs);                                               \
+  args = convert_args(vargs, default_args);                                 \
   res = (*jenv)->callname##A(jenv, JObject(vobj), JMethod(vmeth), args);    \
-  stat_free(args);                                                          \
+  if (args != default_args) stat_free(args);                                \
   check_java_exception();                                                   \
   return resconv(res);                                                      \
 }
@@ -344,23 +352,25 @@ CALLMETHOD(CallDoubleMethod, jdouble, copy_double)
 
 value camljava_CallCamlintMethod(value vobj, value vmeth, value vargs)
 {
+  jvalue default_args[NUM_DEFAULT_ARGS];
   jvalue * args;
   jint res;
   check_non_null(vobj);
-  args = convert_args(vargs);
+  args = convert_args(vargs, default_args);
   res = (*jenv)->CallIntMethodA(jenv, JObject(vobj), JMethod(vmeth), args);
-  stat_free(args);
+  if (args != default_args) stat_free(args);
   check_java_exception();
   return Val_int(res);
 }
 
 value camljava_CallVoidMethod(value vobj, value vmeth, value vargs)
 {
+  jvalue default_args[NUM_DEFAULT_ARGS];
   jvalue * args;
   check_non_null(vobj);
-  args = convert_args(vargs);
+  args = convert_args(vargs, default_args);
   (*jenv)->CallVoidMethodA(jenv, JObject(vobj), JMethod(vmeth), args);
-  stat_free(args);
+  if (args != default_args) stat_free(args);
   check_java_exception();
   return Val_unit;
 }
@@ -368,10 +378,11 @@ value camljava_CallVoidMethod(value vobj, value vmeth, value vargs)
 #define CALLSTATICMETHOD(callname,restyp,resconv)                           \
 value camljava_##callname(value vclass, value vmeth, value vargs)           \
 {                                                                           \
-  jvalue * args = convert_args(vargs);                                      \
+  jvalue default_args[NUM_DEFAULT_ARGS];                                    \
+  jvalue * args = convert_args(vargs, default_args);                        \
   restyp res =                                                              \
     (*jenv)->callname##A(jenv, JObject(vclass), JMethod(vmeth), args);      \
-  stat_free(args);                                                          \
+  if (args != default_args) stat_free(args);                                \
   check_java_exception();                                                   \
   return resconv(res);                                                      \
 }
@@ -388,19 +399,21 @@ CALLSTATICMETHOD(CallStaticDoubleMethod, jdouble, copy_double)
 
 value camljava_CallStaticCamlIntMethod(value vclass, value vmeth, value vargs)
 {
-  jvalue * args = convert_args(vargs);
+  jvalue default_args[NUM_DEFAULT_ARGS];
+  jvalue * args = convert_args(vargs, default_args);
   jint res =
     (*jenv)->CallStaticIntMethodA(jenv, JObject(vclass), JMethod(vmeth), args);
-  stat_free(args);
+  if (args != default_args) stat_free(args);
   check_java_exception();
   return Val_int(res);
 }
 
 value camljava_CallStaticVoidMethod(value vclass, value vmeth, value vargs)
 {
-  jvalue * args = convert_args(vargs);
+  jvalue default_args[NUM_DEFAULT_ARGS];
+  jvalue * args = convert_args(vargs, default_args);
   (*jenv)->CallStaticVoidMethodA(jenv, JObject(vclass), JMethod(vmeth), args);
-  stat_free(args);
+  if (args != default_args) stat_free(args);
   check_java_exception();
   return Val_unit;
 }
@@ -408,13 +421,14 @@ value camljava_CallStaticVoidMethod(value vclass, value vmeth, value vargs)
 #define CALLNONVIRTUALMETHOD(callname,restyp,resconv)                       \
 value camljava_##callname(value vobj, value vclass, value vmeth, value vargs)\
 {                                                                           \
+  jvalue default_args[NUM_DEFAULT_ARGS];                                    \
   jvalue * args;                                                            \
   restyp res;                                                               \
   check_non_null(vobj);                                                     \
-  args = convert_args(vargs);                                               \
+  args = convert_args(vargs, default_args);                                 \
   res = (*jenv)->callname##A(jenv, JObject(vobj), JObject(vclass),          \
                              JMethod(vmeth), args);                         \
-  stat_free(args);                                                          \
+  if (args != default_args) stat_free(args);                                \
   check_java_exception();                                                   \
   return resconv(res);                                                      \
 }
@@ -432,13 +446,14 @@ CALLNONVIRTUALMETHOD(CallNonvirtualDoubleMethod, jdouble, copy_double)
 value camljava_CallNonvirtualCamlintMethod(value vobj, value vclass,
                                            value vmeth, value vargs)
 {
+  jvalue default_args[NUM_DEFAULT_ARGS];
   jvalue * args;
   jint res;
   check_non_null(vobj);
-  args = convert_args(vargs);
+  args = convert_args(vargs, default_args);
   res = (*jenv)->CallNonvirtualIntMethodA(jenv, JObject(vobj), JObject(vclass),
                                           JMethod(vmeth), args);
-  stat_free(args);
+  if (args != default_args) stat_free(args);
   check_java_exception();
   return Val_int(res);
 }
@@ -446,12 +461,13 @@ value camljava_CallNonvirtualCamlintMethod(value vobj, value vclass,
 value camljava_CallNonvirtualVoidMethod(value vobj, value vclass,
                                         value vmeth, value vargs)
 {
+  jvalue default_args[NUM_DEFAULT_ARGS];
   jvalue * args;
   check_non_null(vobj);
-  args = convert_args(vargs);
+  args = convert_args(vargs, default_args);
   (*jenv)->CallNonvirtualVoidMethodA(jenv, JObject(vobj), JObject(vclass),
                                      JMethod(vmeth), args);
-  stat_free(args);
+  if (args != default_args) stat_free(args);
   check_java_exception();
   return Val_unit;
 }
@@ -895,20 +911,20 @@ int64 camljava_GetCamlMethodID(JNIEnv * env, jclass cls, jstring jname)
 /***************** Registration of native methods with the JNI ************/
 
 static JNINativeMethod camljava_natives[] =
-{ { "callbackVoid", "(JJ[Ljava/lang/Object;)V", camljava_CallbackVoid },
-  { "callbackBoolean", "(JJ[Ljava/lang/Object;)Z", camljava_CallbackBoolean },
-  { "callbackByte", "(JJ[Ljava/lang/Object;)B", camljava_CallbackByte },
-  { "callbackChar", "(JJ[Ljava/lang/Object;)C", camljava_CallbackChar },
-  { "callbackShort", "(JJ[Ljava/lang/Object;)S", camljava_CallbackShort },
-  { "callbackCamlint", "(JJ[Ljava/lang/Object;)I", camljava_CallbackCamlint },
-  { "callbackInt", "(JJ[Ljava/lang/Object;)I", camljava_CallbackInt },
-  { "callbackLong", "(JJ[Ljava/lang/Object;)J", camljava_CallbackLong },
-  { "callbackFloat", "(JJ[Ljava/lang/Object;)F", camljava_CallbackFloat },
-  { "callbackDouble", "(JJ[Ljava/lang/Object;)D", camljava_CallbackDouble },
+{ { "callbackVoid", "(JJ[Ljava/lang/Object;)V", (void*)camljava_CallbackVoid },
+  { "callbackBoolean", "(JJ[Ljava/lang/Object;)Z", (void*)camljava_CallbackBoolean },
+  { "callbackByte", "(JJ[Ljava/lang/Object;)B", (void*)camljava_CallbackByte },
+  { "callbackChar", "(JJ[Ljava/lang/Object;)C", (void*)camljava_CallbackChar },
+  { "callbackShort", "(JJ[Ljava/lang/Object;)S", (void*)camljava_CallbackShort },
+  { "callbackCamlint", "(JJ[Ljava/lang/Object;)I", (void*)camljava_CallbackCamlint },
+  { "callbackInt", "(JJ[Ljava/lang/Object;)I", (void*)camljava_CallbackInt },
+  { "callbackLong", "(JJ[Ljava/lang/Object;)J", (void*)camljava_CallbackLong },
+  { "callbackFloat", "(JJ[Ljava/lang/Object;)F", (void*)camljava_CallbackFloat },
+  { "callbackDouble", "(JJ[Ljava/lang/Object;)D", (void*)camljava_CallbackDouble },
   { "callbackObject", "(JJ[Ljava/lang/Object;)Ljava/lang/Object;",
-    camljava_CallbackObject },
-  { "freeWrapper", "(J)V", camljava_FreeWrapper },
-  { "getCamlMethodID", "(Ljava/lang/String;)J", camljava_GetCamlMethodID }
+    (void*)camljava_CallbackObject },
+  { "freeWrapper", "(J)V", (void*)camljava_FreeWrapper },
+  { "getCamlMethodID", "(Ljava/lang/String;)J", (void*)camljava_GetCamlMethodID }
 };
 
 value camljava_RegisterNatives(value unit)

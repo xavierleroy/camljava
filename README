@@ -22,7 +22,7 @@ This raises fairly delicate type mapping issues, though, so don't hold
 your breath.
 
 
-INSTALLATION:
+INSTALLATION ON A UNIX PLATFORM:
 
 - Edit Makefile.config to define parameters depending on your Java
   installation.  As distributed, the library is set up for
@@ -34,8 +34,22 @@ INSTALLATION:
   make install
 
 - For testing:
-    cd test
-    make
+  make tst
+
+
+INSTALLATION ON A WINDOWS PLATFORM:
+
+- Works with the MSVC port of OCaml for Windows.  
+  GNU make and Cygwin tools are required to do the installation.
+
+- Edit Makefile.config.msvc to define parameters depending on your Java
+  installation.  
+
+- make -f Makefile.msvc
+  make -f Makefile.msvc install
+
+- For testing:
+  make -f Makefile.msvc tst
 
 
 USAGE:

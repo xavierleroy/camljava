@@ -1,8 +1,12 @@
 all:
-	cd lib; make all
+	cd lib; $(MAKE) all
 
 install:
-	cd lib; make install
+	cd lib; $(MAKE) install
+
+tst:
+	cd test; $(MAKE)
 
 clean:
-	cd lib; make clean
+	cd lib; $(MAKE) clean
+	cd test; $(MAKE) clean

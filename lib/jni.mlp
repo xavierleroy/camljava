@@ -10,7 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: jni.mlp,v 1.2 2001-06-05 14:01:06 xleroy Exp $ *)
+(* $Id: jni.mlp,v 1.3 2003-02-20 13:42:40 xleroy Exp $ *)
 
 (* Low-level Java interface (JNI level) *)
 
@@ -19,9 +19,14 @@ external shutdown: unit -> unit = "camljava_Shutdown"
 
 let _ =
   let libpath = "%PATH%" in  
+  let sep =
+    match Sys.os_type with
+      "Unix" -> ":"
+    | "Win32" -> ";"
+    | _ -> assert false in
   let path =
     try
-      Sys.getenv "CLASSPATH" ^ ":" ^ libpath
+      Sys.getenv "CLASSPATH" ^ sep ^ libpath
     with Not_found ->
       libpath in
   init path;

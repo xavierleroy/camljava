@@ -509,7 +509,7 @@ static value extract_java_string (JNIEnv * env, jstring jstr)
   len = (*env)->GetStringUTFLength(env, jstr);
   res = alloc_string(len);
   chrs = (*env)->GetStringUTFChars(env, jstr, &isCopy);
-  bcopy(chrs, String_val(res), len);
+  memcpy(String_val(res), chrs, len);
   (*env)->ReleaseStringUTFChars(env, jstr, chrs);
   return res;
 }
@@ -660,17 +660,22 @@ value camljava_SetByteArrayRegion(value vstr, value vsrcidx,
 
 value camljava_Init(value vclasspath)
 {
-  JDK1_1InitArgs vm_args; /* JDK 1.1 VM initialization arguments */
+  JavaVMInitArgs vm_args;
+  JavaVMOption options[1];
   int retcode;
   char * classpath;
+  char * setclasspath = "-Djava.class.path=";
 
-  /* Get the default initialization arguments and set the class path */
-  vm_args.version = JNI_VERSION_1_1;
-  JNI_GetDefaultJavaVMInitArgs(&vm_args);
-  classpath = stat_alloc(strlen(vm_args.classpath) + 1 +
-                         string_length(vclasspath) + 1);
-  sprintf(classpath, "%s:%s", vm_args.classpath, String_val(vclasspath));
-  vm_args.classpath = classpath;
+  /* Set the class path */
+  classpath = 
+    stat_alloc(strlen(setclasspath) + string_length(vclasspath) + 1);
+  strcpy(classpath, setclasspath);
+  strcat(classpath, String_val(vclasspath));
+  options[0].optionString = classpath;
+  vm_args.version = JNI_VERSION_1_2;
+  vm_args.options = options;
+  vm_args.nOptions = 1;
+  vm_args.ignoreUnrecognized = 1;
   /* Load and initialize a Java VM, return a JNI interface pointer in env */
   retcode = JNI_CreateJavaVM(&jvm, (void **) &jenv, &vm_args);
   stat_free(classpath);

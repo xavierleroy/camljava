@@ -26,18 +26,23 @@ INSTALLATION:
 
 - Edit Makefile.config to define parameters depending on your Java
   installation.  As distributed, the library is set up for
-  Sun's JDK version 1.2.2 on a Linux x86 / RedHat 6.2 platform.
-  It has never been tested on anything else...
+  Sun's JDK version 1.2.2 on a Linux x86 platform.
+  It has not been tested on anything else...
 
 - make
   become superuser
   make install
 
+- For testing:
+    cd test
+    make
+
+
 USAGE:
 
-The module is Jni.  A good knowledge of the JNI is assumed; see Sun's
-book or Web pages about JNI.  Then, the comments in lib/jni.mli should
-make sense.
+The module is named "Jni".  A good knowledge of the JNI is assumed; see Sun's
+JNI book or http://java.sun.com/products/jdk/1.2/docs/guide/jni/
+Then, the comments in lib/jni.mli should make sense.
 
 Usage:          ocamlc -I +camljava jni.cma ...
             or  ocamlopt -I +camljava jni.cmxa ...

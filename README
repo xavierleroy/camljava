@@ -22,12 +22,18 @@ This raises fairly delicate type mapping issues, though, so don't hold
 your breath.
 
 
+REQUIREMENTS:
+
+- This release of CamlJava requires Objective Caml version 3.08 or later.
+
+- A Java implementation that supports JNI (Java Native Interface).
+  So far, only Sun's JDK has been tested.
+
 INSTALLATION ON A UNIX PLATFORM:
 
 - Edit Makefile.config to define parameters depending on your Java
   installation.  As distributed, the library is set up for
-  Sun's JDK version 1.2.2 on a Linux x86 platform.
-  It has not been tested on anything else...
+  Sun's JDK version 1.4.1 on a Linux x86 platform.
 
 - make
   become superuser

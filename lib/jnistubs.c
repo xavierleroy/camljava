@@ -767,16 +767,16 @@ static int init_caml_classes(JNIEnv * env)
 
 #define CALLBACK_OUT_OF_MEMORY Make_exception_result(0)
 
-static value caml_callback(JNIEnv * env,
-                           jlong obj_proxy,
-                           jlong method_id,
-                           jobjectArray jargs)
+static value camljava_callback(JNIEnv * env,
+                               jlong obj_proxy,
+                               jlong method_id,
+                               jobjectArray jargs)
 {
   JNIEnv * savedenv;
   int n, i;
   value * cargs;
   jobject arg;
-  value carg, lab, clos, res;
+  value carg, clos, res;
 
   savedenv = jenv;
   jenv = env;
@@ -820,7 +820,7 @@ static value caml_callback(JNIEnv * env,
         carg = copy_double((*env)->GetFloatField(env, arg,
                                                  caml_float_contents));
       else if ((*env)->IsInstanceOf(env, arg, caml_double))
-        carg = copy_double((*env)->GetByteField(env, arg,
+        carg = copy_double((*env)->GetDoubleField(env, arg,
                                                 caml_double_contents));
       else if ((*env)->IsInstanceOf(env, arg, java_lang_string))
         carg = extract_java_string(env, (jstring) arg);
@@ -829,9 +829,7 @@ static value caml_callback(JNIEnv * env,
       cargs[i] = carg;
     }
   End_roots();
-  lab = (value) method_id;
-  clos = Field (Field (Field (cargs[0], 0), (lab >> 16) / sizeof (value)),
-                (lab / sizeof (value)) & 0xFF);
+  clos = caml_get_public_method(cargs[0], (value) method_id);
   res = callbackN_exn(clos, n, cargs);
   free(cargs);
   jenv = savedenv;
@@ -851,7 +849,7 @@ void camljava_CallbackVoid(JNIEnv * env, jclass cls,
                            jlong obj_proxy, jlong method_id,
                            jobjectArray args)
 {
-  value res = caml_callback(env, obj_proxy, method_id, args);
+  value res = camljava_callback(env, obj_proxy, method_id, args);
   if (Is_exception_result(res)) map_caml_exception(env, res);
 }
 
@@ -860,7 +858,7 @@ restyp camljava_Callback##name(JNIEnv * env, jclass cls,                    \
                                 jlong obj_proxy, jlong method_id,           \
                                 jobjectArray args)                          \
 {                                                                           \
-  value res = caml_callback(env, obj_proxy, method_id, args);               \
+  value res = camljava_callback(env, obj_proxy, method_id, args);           \
   if (Is_exception_result(res)) {                                           \
     map_caml_exception(env, res);                                           \
     return 0; /*dummy return value*/                                        \
@@ -896,21 +894,16 @@ void camljava_FreeWrapper(JNIEnv * env, jclass cls, jlong wrapper)
   stat_free(w);
 }
 
-int64 camljava_GetCamlMethodID(JNIEnv * env, jclass cls, jstring jname)
+jlong camljava_GetCamlMethodID(JNIEnv * env, jclass cls, jstring jname)
 {
-  static value * camljava_new_method = NULL;
-  value cname, res;
+  jboolean isCopy;
+  const char * chrs;
+  value res;
 
-  if (camljava_new_method == NULL) {
-    camljava_new_method = caml_named_value("Oo.new_method");
-  }
-  cname = extract_java_string(env, jname);
-  res = callback_exn(*camljava_new_method, cname);
-  if (Is_exception_result(res)) {
-    map_caml_exception(env, res);
-    return 0;
-  } else
-    return res;
+  chrs = (*env)->GetStringUTFChars(env, jname, &isCopy);
+  res = caml_hash_variant((char *) chrs);
+  (*env)->ReleaseStringUTFChars(env, jname, chrs);
+  return res;
 }
 
 /***************** Registration of native methods with the JNI ************/

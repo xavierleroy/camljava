@@ -14,11 +14,11 @@ install:
 	jar cf $(CAMLJAVALIB)/camljava.jar fr/inria/caml/camljava/*.class
 
 jni.cma: jni.cmo libcamljni.a
-	$(OCAMLC) -a -o jni.cma -custom jni.cmo \
+	$(OCAMLC) -linkall -a -o jni.cma -custom jni.cmo \
             -ccopt "$(JNILIBOPTS)" -cclib -lcamljni -cclib "$(JNILIBS)"
 
 jni.cmxa: jni.cmx libcamljni.a
-	$(OCAMLOPT) -a -o jni.cmxa jni.cmx \
+	$(OCAMLOPT) -linkall -a -o jni.cmxa jni.cmx \
             -ccopt "$(JNILIBOPTS)" -cclib -lcamljni -cclib "$(JNILIBS)"
 
 libcamljni.a: jnistubs.o

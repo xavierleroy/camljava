@@ -58,9 +58,7 @@ let test() =
   print_newline();
   print_string "Current value of testinstance.b is: ";
   print_string (Int32.to_string (get_int_field o b));
-  print_newline()
-  (* Callbacks -- CURRENTLY BROKEN *)
-(****
+  print_newline();
   print_string "Wrapping Caml object into Java object..."; print_newline();
   let cb = wrap_caml_object() in
   let k = get_static_methodID c "k" "(LTestcb;I)I" in
@@ -68,7 +66,6 @@ let test() =
   let r = call_static_int_method c k [|Obj cb; Camlint 2|] in
   print_string "Result is: "; print_string (Int32.to_string r); 
   print_newline()
-****)
 
 let _ =
   test()

@@ -1,0 +1,68 @@
+include ../Makefile.config.msvc
+
+OCAMLC=ocamlc -g
+OCAMLOPT=ocamlopt
+OCAMLDEP=ocamldep
+OCAMLLIB=`ocamlc -where`
+CAMLJAVALIB=$(OCAMLLIB)/camljava
+
+all: jni.cma jni.cmxa javaclasses
+
+install:
+	mkdir -p $(CAMLJAVALIB)
+	cp jni.cma jni.cmi jni.cmxa jni.lib libcamljni.lib jni.mli $(CAMLJAVALIB)
+	jar cf $(CAMLJAVALIB)/camljava.jar fr/inria/caml/camljava/*.class
+
+jni.cma: jni.cmo libcamljni.lib
+	$(OCAMLC) -linkall -a -o jni.cma -custom jni.cmo \
+            -ccopt "$(JNILIBOPTS)" -cclib -lcamljni -cclib "$(JNILIBS)"
+
+jni.cmxa: jni.cmx libcamljni.lib
+	$(OCAMLOPT) -linkall -a -o jni.cmxa jni.cmx \
+            -ccopt "$(JNILIBOPTS)" -cclib -lcamljni -cclib "$(JNILIBS)"
+
+libcamljni.lib: jnistubs.obj
+	lib /nologo /debugtype:CV /out:libcamljni.lib jnistubs.obj
+
+clean::
+	rm -f libcamljni.lib
+
+jni.ml: jni.mlp jni.mli ../Makefile.config
+	rm -f jni.ml
+	sed -e 's|%PATH%|'$(CAMLJAVALIB)/camljava.jar'|' \
+                jni.mlp > jni.ml
+	chmod -w jni.ml
+
+clean::
+	rm -f jni.ml
+
+beforedepend:: jni.ml
+
+javaclasses:
+	$(JAVAC) fr/inria/caml/camljava/*.java
+
+clean::
+	rm -f fr/inria/caml/camljava/*.class
+
+clean::
+	rm -f *.cm? *.obj *.lib
+
+.SUFFIXES: .c .obj .ml .mli .cmo .cmi .cmx
+
+.c.obj:
+	$(CC) -c $(CFLAGS) $(JNIINCLUDES) -I$(OCAMLLIB) $*.c
+
+.ml.cmo:
+	$(OCAMLC) -c $*.ml
+
+.ml.cmx:
+	$(OCAMLOPT) -c $*.ml
+
+.mli.cmi:
+	$(OCAMLC) -c $*.mli
+
+depend: beforedepend
+	$(OCAMLDEP) *.mli *.ml > .depend
+
+include .depend
+

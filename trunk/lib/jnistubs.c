@@ -397,7 +397,7 @@ CALLSTATICMETHOD(CallStaticLongMethod, jlong, copy_int64)
 CALLSTATICMETHOD(CallStaticFloatMethod, jfloat, copy_double)
 CALLSTATICMETHOD(CallStaticDoubleMethod, jdouble, copy_double)
 
-value camljava_CallStaticCamlIntMethod(value vclass, value vmeth, value vargs)
+value camljava_CallStaticCamlintMethod(value vclass, value vmeth, value vargs)
 {
   jvalue default_args[NUM_DEFAULT_ARGS];
   jvalue * args = convert_args(vargs, default_args);

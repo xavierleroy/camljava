@@ -10,7 +10,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: jni.mli,v 1.1 2001-06-05 12:19:55 xleroy Exp $ *)
+(* $Id: jni.mli,v 1.2 2005-10-21 08:19:11 xleroy Exp $ *)
 
 (* Low-level Java interface (JNI level) *)
 
@@ -112,7 +112,7 @@ external get_long_field: obj -> fieldID -> int64
 external get_float_field: obj -> fieldID -> float
         = "camljava_GetFloatField"
 external get_double_field: obj -> fieldID -> float
-        = "camljava_GetFloatField"
+        = "camljava_GetDoubleField"
 
 external set_object_field: obj -> fieldID -> obj -> unit
         = "camljava_SetObjectField"
@@ -133,7 +133,7 @@ external set_long_field: obj -> fieldID -> int64 -> unit
 external set_float_field: obj -> fieldID -> float -> unit
         = "camljava_SetFloatField"
 external set_double_field: obj -> fieldID -> float -> unit
-        = "camljava_SetFloatField"
+        = "camljava_SetDoubleField"
 
 external get_static_object_field: clazz -> fieldID -> obj
         = "camljava_GetStaticObjectField"
@@ -154,7 +154,7 @@ external get_static_long_field: clazz -> fieldID -> int64
 external get_static_float_field: clazz -> fieldID -> float
         = "camljava_GetStaticFloatField"
 external get_static_double_field: clazz -> fieldID -> float
-        = "camljava_GetStaticFloatField"
+        = "camljava_GetStaticDoubleField"
 
 external set_static_obj_field: clazz -> fieldID -> obj -> unit
         = "camljava_SetStaticObjectField"
@@ -175,7 +175,7 @@ external set_static_long_field: clazz -> fieldID -> int64 -> unit
 external set_static_float_field: clazz -> fieldID -> float -> unit
         = "camljava_SetStaticFloatField"
 external set_static_double_field: clazz -> fieldID -> float -> unit
-        = "camljava_SetStaticFloatField"
+        = "camljava_SetStaticDoubleField"
 
 (* Method invocation *)
 

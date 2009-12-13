@@ -14,6 +14,24 @@ static JNIEnv * jenv;
 #define Val_jboolean(b) ((b) == JNI_FALSE ? Val_false : Val_true)
 #define Jboolean_val(v) (Val_bool(v) ? JNI_TRUE : JNI_FALSE)
 
+/********** Threading *************/
+
+static JNIEnv * g_jenv;
+
+void init_threading() {
+  g_jenv = jenv;
+}
+
+void camljava_check_main_thread() {
+  if(jenv != g_jenv) {
+    fprintf(stderr, "CamlJava: callbacks from threads other than main are not allowed: ABORT.\n");
+    fflush(stderr);
+    // raise a Java exception would be better
+    exit(2);
+  }
+  return;
+}
+
 /************ Wrapping of Java objects as Caml values *************/
 
 #define JObject(v) (*((jobject *) Data_custom_val(v)))
@@ -680,6 +698,7 @@ value camljava_Init(value vclasspath)
   retcode = JNI_CreateJavaVM(&jvm, (void **) &jenv, &vm_args);
   stat_free(classpath);
   if (retcode < 0) failwith("Java.init");
+  init_threading(); // by O'Jacare
   return Val_unit;
 }
 
@@ -781,6 +800,9 @@ static value camljava_callback(JNIEnv * env,
 
   savedenv = jenv;
   jenv = env;
+
+  camljava_check_main_thread(); // by O'Jacare
+
   if (!caml_classes_initialized) {
     if (init_caml_classes(env) == -1) return -1;
     caml_classes_initialized = 1;

@@ -74,6 +74,13 @@ value camljava_IsNull(value vobj)
 
 /*********** Reflecting Java exceptions as Caml exceptions *************/
 
+static int debug = 0;
+
+value camljava_set_debug(value v) {
+  debug = Bool_val(v);
+  return Val_unit;
+}
+
 static void check_java_exception(void)
 {
   jthrowable exn;
@@ -82,10 +89,10 @@ static void check_java_exception(void)
 
   exn = (*jenv)->ExceptionOccurred(jenv);
   if (exn != NULL) {
-#if 0
-    /* For debugging */
-    (*jenv)->ExceptionDescribe(jenv);
-#endif
+    if(debug) {
+      /* For debugging */
+      (*jenv)->ExceptionDescribe(jenv);
+    }
     (*jenv)->ExceptionClear(jenv);
     /* TODO: check Caml exception embedded into Java exception */
     if (camljava_raise_exception == NULL) {

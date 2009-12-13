@@ -14,6 +14,8 @@
 
 (* Low-level Java interface (JNI level) *)
 
+external set_debug: bool -> unit = "camljava_set_debug"
+
 (* Object operations *)
 
 type obj

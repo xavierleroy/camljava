@@ -523,6 +523,15 @@ value camljava_MakeJavaString (value vstr)
   return alloc_jobject(jstr);
 }
 
+/* Automatically convert Java string to Caml string?
+   True by default; globally set to false by O'Jacare. */
+static int string_auto_conv = 1;
+
+value camljava_set_strconv(value v) {
+  string_auto_conv = Bool_val(v);
+  return Val_unit;
+}
+
 static value extract_java_string (JNIEnv * env, jstring jstr)
 {
   jsize len;
@@ -852,7 +861,8 @@ static value camljava_callback(JNIEnv * env,
       else if ((*env)->IsInstanceOf(env, arg, caml_double))
         carg = copy_double((*env)->GetDoubleField(env, arg,
                                                 caml_double_contents));
-      else if ((*env)->IsInstanceOf(env, arg, java_lang_string))
+      else if (string_auto_conv
+	       && (*env)->IsInstanceOf(env, arg, java_lang_string))
         carg = extract_java_string(env, (jstring) arg);
       else
         carg = alloc_jobject(arg);

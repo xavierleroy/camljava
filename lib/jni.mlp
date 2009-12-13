@@ -16,6 +16,8 @@
 
 external set_debug: bool -> unit = "camljava_set_debug"
 
+external set_string_auto_conv: bool -> unit = "camljava_set_strconv"
+
 external init: string -> unit = "camljava_Init"
 external shutdown: unit -> unit = "camljava_Shutdown"
 

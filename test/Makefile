@@ -3,7 +3,7 @@ include ../Makefile.config
 CAMLJAVA=`ocamlc -where`/camljava/camljava.jar
 
 all: jnitest Test.class Testcb.class
-	./jnitest
+	CLASSPATH=. ./jnitest
 
 jnitest: jnitest.ml
 	ocamlc -ccopt -g -o jnitest -I +camljava jni.cma jnitest.ml
@@ -18,3 +18,4 @@ clean::
 
 clean::
 	rm -f *.cm?
+	rm -f *.class

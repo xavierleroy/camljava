@@ -1,5 +1,7 @@
 all:
 	cd lib; $(MAKE) all
+byte:
+	cd lib; $(MAKE) byte
 
 install:
 	cd lib; $(MAKE) install

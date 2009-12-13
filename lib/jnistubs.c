@@ -735,6 +735,7 @@ static int init_caml_classes(JNIEnv * env)
 {
 #define INIT_CAML_CLASS(cls,fld,cname,fsig)                                 \
     cls = (*env)->FindClass(env, cname);                                    \
+    cls = (*env)->NewGlobalRef(env, cls);                                   \
     if (cls == NULL) return -1;                                             \
     fld = (*env)->GetFieldID(env, cls, "contents", fsig);                   \
     if (fld == NULL) return -1;

@@ -924,7 +924,7 @@ value camljava_WrapCamlObject(value vobj)
   value * wrapper = stat_alloc(sizeof(value));
   *wrapper = vobj;
   register_global_root(wrapper);
-  return copy_int64((int64) (value) wrapper);
+  return copy_int64((jlong) (value) wrapper);
 }
 
 void camljava_FreeWrapper(JNIEnv * env, jclass cls, jlong wrapper)

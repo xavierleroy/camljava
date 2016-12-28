@@ -28,6 +28,9 @@ exception Null_pointer
         (* Exception raised by the operations below when they
            encounter a null object reference in arguments that must
            be non-null. *)
+exception Exception of obj
+        (* Exception raised by the method invocation functions below
+           when the Java method terminates on an unhandled exception. *)
 external is_null: obj -> bool = "camljava_IsNull"
         (* Determine if the given object reference is [null] *)
 external is_same_object: obj -> obj -> bool = "camljava_IsSameObject"

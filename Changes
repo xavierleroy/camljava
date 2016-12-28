@@ -1,0 +1,6 @@
+Current:
+- Export "exception Exception of obj" in jni.mli
+- Update Makefile.config to OpenJDK 8 for Linux/AMD64
+- Migration to Github
+
+Version 0.3, 2004-07-13

@@ -361,3 +361,9 @@ external set_double_array_element: obj -> int -> float -> unit
 
 val wrap_object: < .. > -> obj
 
+(* Init from ocaml
+  Other functions in this module will crash
+    if this function or Caml.startup (java) is not called once first
+  Must not be called if Caml.startup is called from java *)
+(* Takes the path to camljava.jar *)
+val init: unit -> unit

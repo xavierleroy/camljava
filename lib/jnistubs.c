@@ -1,8 +1,10 @@
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
 #include <jni.h>
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
+
 #include <caml/alloc.h>
 #include <caml/custom.h>
 #include <caml/fail.h>
@@ -694,6 +696,9 @@ value camljava_SetByteArrayRegion(value vstr, value vsrcidx,
 
 value camljava_Init(value vclasspath)
 {
+#ifdef ANDROID
+  failwith("Jni.init: Not available on Android");
+#else
   JavaVMInitArgs vm_args;
   JavaVMOption options[1];
   int retcode;
@@ -715,6 +720,7 @@ value camljava_Init(value vclasspath)
   stat_free(classpath);
   if (retcode < 0) failwith("Java.init");
   init_threading(); // by O'Jacare
+#endif
   return Val_unit;
 }
 
@@ -722,6 +728,35 @@ value camljava_Shutdown(value unit)
 {
   (*jvm)->DestroyJavaVM(jvm);
   return Val_unit;
+}
+
+// Implementation of Caml.startup
+// Cannot be registered with camljava_RegisterNatives
+//  because it may be called before camljava_RegisterNatives
+void Java_fr_inria_caml_camljava_Caml_startup(JNIEnv * env, jclass cls, jobjectArray jargv)
+{
+  jenv = env;
+  init_threading();
+  {
+    jsize argc = (*env)->GetArrayLength(env, jargv);
+    // Dup jargv before because
+    // caml_startup keep a reference to argv for ever
+    char **argv;
+    jsize i;
+    argv = malloc(sizeof(char*) * ((*env)->GetArrayLength(env, jargv) + 1));
+    for (i = 0; i < argc; i++)
+    {
+      jbyteArray arg = (*env)->GetObjectArrayElement(env, jargv, i);
+      argv[i] = strdup((*env)->GetStringUTFChars(env, arg, NULL));
+      (*env)->ReleaseStringUTFChars(env, arg, argv[i]);
+    }
+    argv[i] = NULL;
+    caml_startup(argv);
+  }
+  {
+    value *stubs_init = caml_named_value("camljava_stubs_init");
+    caml_callback(*stubs_init, Val_unit);
+  }
 }
 
 /****************** Object operations ********************/

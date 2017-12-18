@@ -1,26 +1,36 @@
 include ../Makefile.config
 
-OCAMLC=ocamlc -g
-OCAMLOPT=ocamlopt
-OCAMLDEP=ocamldep
-OCAMLLIB=`ocamlc -where`
+OCAMLFIND=ocamlfind
+OCAMLC=$(OCAMLFIND) ocamlc -g
+OCAMLOPT=$(OCAMLFIND) ocamlopt
+OCAMLDEP=$(OCAMLFIND) ocamldep
+OCAMLLIB=`$(OCAMLC) -where`
 CAMLJAVALIB=$(OCAMLLIB)/camljava
 
-all: jni.cma jni.cmxa javaclasses
-byte: jni.cma javaclasses
+JNICFLAGS=-ccopt "$(JNILIBOPTS)" -cclib "$(JNILIBS)"
+
+JAVA_FILES=$(wildcard fr/inria/caml/camljava/*.java)
+# Incomplete list of .class files
+JAVA_CLASSES=$(JAVA_FILES:.java=.class)
+
+all: jni.cma jni.cmxa camljava.jar
+byte: jni.cma camljava.jar
 
 install:
 	mkdir -p $(CAMLJAVALIB)
-	cp jni.cma jni.cmi $(wildcard jni.cmxa jni.a) libcamljni.a jni.mli $(CAMLJAVALIB)
-	jar cf $(CAMLJAVALIB)/camljava.jar fr/inria/caml/camljava/*.class
+	cp jni.cma jni.cmi camljava.jar $(wildcard jni.cmxa jni.a) libcamljni.a jni.mli $(CAMLJAVALIB)
+
+camljava.jar: $(JAVA_CLASSES)
+	jar cf $@ fr/inria/caml/camljava/*.class
+
+clean::
+	rm -f camljava.jar
 
 jni.cma: jni.cmo libcamljni.a
-	$(OCAMLC) -linkall -a -o jni.cma -custom jni.cmo \
-            -ccopt "$(JNILIBOPTS)" -cclib -lcamljni -cclib "$(JNILIBS)"
+	$(OCAMLC) -linkall -a -o jni.cma -custom jni.cmo $(JNICFLAGS) -cclib -lcamljni
 
 jni.cmxa: jni.cmx libcamljni.a
-	$(OCAMLOPT) -linkall -a -o jni.cmxa jni.cmx \
-            -ccopt "$(JNILIBOPTS)" -cclib -lcamljni -cclib "$(JNILIBS)"
+	$(OCAMLOPT) -linkall -a -o jni.cmxa jni.cmx $(JNICFLAGS) -cclib -lcamljni
 
 libcamljni.a: jnistubs.o
 	rm -f libcamljni.a
@@ -40,8 +50,8 @@ clean::
 
 beforedepend:: jni.ml
 
-javaclasses:
-	$(JAVAC) fr/inria/caml/camljava/*.java
+$(JAVA_CLASSES): $(JAVA_FILES)
+	$(JAVAC) $(JAVACFLAGS) $(JAVA_FILES)
 
 clean::
 	rm -f fr/inria/caml/camljava/*.class
@@ -52,7 +62,7 @@ clean::
 .SUFFIXES: .ml .mli .cmo .cmi .cmx
 
 .c.o:
-	$(CC) -c $(CFLAGS) $(JNIINCLUDES) -I$(OCAMLLIB) $*.c
+	$(OCAMLOPT) -c -ccopt "$(CFLAGS) $(JNIINCLUDES)" $*.c
 
 .ml.cmo:
 	$(OCAMLC) -c $*.ml

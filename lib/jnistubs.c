@@ -11,7 +11,7 @@
 #include <caml/callback.h>
 
 static JavaVM * jvm;
-static JNIEnv * jenv;
+static JNIEnv * jenv = NULL;
 
 #define Val_jboolean(b) ((b) == JNI_FALSE ? Val_false : Val_true)
 #define Jboolean_val(v) (Val_bool(v) ? JNI_TRUE : JNI_FALSE)
@@ -705,6 +705,9 @@ value camljava_Init(value vclasspath)
   char * classpath;
   char * setclasspath = "-Djava.class.path=";
 
+  /* Already initialized, eg. with Caml.startup */
+  if (jenv != NULL)
+    return Val_unit;
   /* Set the class path */
   classpath = 
     stat_alloc(strlen(setclasspath) + string_length(vclasspath) + 1);
@@ -752,10 +755,6 @@ void Java_fr_inria_caml_camljava_Caml_startup(JNIEnv * env, jclass cls, jobjectA
     }
     argv[i] = NULL;
     caml_startup(argv);
-  }
-  {
-    value *stubs_init = caml_named_value("camljava_stubs_init");
-    caml_callback(*stubs_init, Val_unit);
   }
 }
 

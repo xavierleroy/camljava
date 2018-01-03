@@ -21,6 +21,21 @@ external set_string_auto_conv: bool -> unit = "camljava_set_strconv"
 external init: string -> unit = "camljava_Init"
 external shutdown: unit -> unit = "camljava_Shutdown"
 
+let _ =
+  let libpath = "%PATH%" in
+  let sep =
+    match Sys.os_type with
+      "Unix" -> ":"
+    | "Win32" -> ";"
+    | _ -> assert false in
+  let path =
+    try
+      Sys.getenv "CLASSPATH" ^ sep ^ libpath
+    with Not_found ->
+      libpath in
+  init path;
+  at_exit shutdown
+
 type obj
 
 external get_null: unit -> obj = "camljava_GetNull"
@@ -29,9 +44,18 @@ let null = get_null()
 
 exception Null_pointer
 
+let _ = Callback.register_exception "camljava_null_pointer" Null_pointer
+
 exception Exception of obj
 
+let _ = Callback.register "camljava_raise_exception"
+          (fun obj -> raise (Exception obj))
+
 external register_natives: unit -> unit = "camljava_RegisterNatives"
+
+let _ = register_natives()
+
+let _ = Callback.register "Oo.new_method" Oo.new_method
 
 (* String operations *)
 
@@ -43,6 +67,8 @@ let null_string = ""
 let is_null_string s = s == null_string
 
 external register_null_string: string -> unit = "camljava_RegisterNullString"
+
+let _ = register_null_string null_string
 
 (* Class operations *)
 
@@ -339,42 +365,11 @@ external is_same_object: obj -> obj -> bool = "camljava_IsSameObject"
 external wrap_caml_object : < .. > -> int64 = "camljava_WrapCamlObject"
 
 let callback_class =
-  lazy (
-    let callback_class = find_class "fr/inria/caml/camljava/Callback" in
-    callback_class, get_methodID callback_class "<init>" "(J)V")
-
+  find_class "fr/inria/caml/camljava/Callback"
+let callback_init =
+  get_methodID callback_class "<init>" "(J)V"
 let wrap_object camlobj =
-  let callback_class, callback_init = Lazy.force callback_class in
   let javaobj = alloc_object callback_class in
   call_nonvirtual_void_method javaobj callback_class callback_init
                               [|Long (wrap_caml_object camlobj)|];
   javaobj
-
-(* Init *)
-
-let stubs_init () =
-  Callback.register_exception "camljava_null_pointer" Null_pointer;
-  Callback.register "camljava_raise_exception"
-    (fun obj -> raise (Exception obj));
-  register_natives();
-  Callback.register "Oo.new_method" Oo.new_method;
-  register_null_string null_string
-
-let init () =
-  let libpath = "%PATH%" in
-  let sep =
-    match Sys.os_type with
-      "Unix" -> ":"
-    | "Win32" -> ";"
-    | _ -> assert false in
-  let path =
-    try
-      Sys.getenv "CLASSPATH" ^ sep ^ libpath
-    with Not_found ->
-      libpath in
-  stubs_init ();
-  init path;
-  at_exit shutdown
-
-let () =
-  Callback.register "camljava_stubs_init" stubs_init

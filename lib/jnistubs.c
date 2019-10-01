@@ -85,7 +85,7 @@ static void check_java_exception(void)
 {
   jthrowable exn;
   value vobj;
-  static value * camljava_raise_exception = NULL;
+  static const value * camljava_raise_exception = NULL;
 
   exn = (*jenv)->ExceptionOccurred(jenv);
   if (exn != NULL) {
@@ -108,7 +108,7 @@ static void check_java_exception(void)
 
 static void check_non_null(value jobj)
 {
-  static value * camljava_null_pointer;
+  static const value * camljava_null_pointer;
   if (JObject(jobj) != NULL) return;
   if (camljava_null_pointer == NULL) {
     camljava_null_pointer = caml_named_value("camljava_null_pointer");

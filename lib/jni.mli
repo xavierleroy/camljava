@@ -360,4 +360,3 @@ external set_double_array_element: obj -> int -> float -> unit
 (* Auxiliaries for Java->OCaml callbacks *)
 
 val wrap_object: < .. > -> obj
-

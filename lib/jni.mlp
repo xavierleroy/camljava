@@ -22,7 +22,7 @@ external init: string -> unit = "camljava_Init"
 external shutdown: unit -> unit = "camljava_Shutdown"
 
 let _ =
-  let libpath = "%PATH%" in  
+  let libpath = "%PATH%" in
   let sep =
     match Sys.os_type with
       "Unix" -> ":"

@@ -770,6 +770,7 @@ static int init_caml_classes(JNIEnv * env)
 {
 #define INIT_CAML_CLASS(cls,fld,cname,fsig)                                 \
     cls = (*env)->FindClass(env, cname);                                    \
+    if (cls == NULL) return -1;                                             \
     cls = (*env)->NewGlobalRef(env, cls);                                   \
     if (cls == NULL) return -1;                                             \
     fld = (*env)->GetFieldID(env, cls, "contents", fsig);                   \
@@ -795,8 +796,14 @@ static int init_caml_classes(JNIEnv * env)
                   "fr/inria/caml/camljava/Double", "D");
   java_lang_string = (*env)->FindClass(env, "java/lang/String");
   if (java_lang_string == NULL) return -1;
+  java_lang_string = (*env)->NewGlobalRef(env, java_lang_string);
+  if (java_lang_string == NULL) return -1;
+
   caml_exception = (*env)->FindClass(env, "fr/inria/caml/camljava/Exception");
   if (caml_exception == NULL) return -1;
+  caml_exception = (*env)->NewGlobalRef(env, caml_exception);
+  if (caml_exception == NULL) return -1;
+  
   return 0;
 #undef INIT_CAML_CLASS
 }

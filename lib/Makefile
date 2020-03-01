@@ -6,13 +6,12 @@ OCAMLDEP=ocamldep
 OCAMLLIB=`ocamlc -where`
 CAMLJAVALIB=$(OCAMLLIB)/camljava
 
-all: jni.cma jni.cmxa javaclasses
-byte: jni.cma javaclasses
+all: jni.cma jni.cmxa camljava.jar
+byte: jni.cma camljava.jar
 
 install:
 	mkdir -p $(CAMLJAVALIB)
-	cp jni.cma jni.cmi $(wildcard jni.cmxa jni.a) libcamljni.a jni.mli $(CAMLJAVALIB)
-	jar cf $(CAMLJAVALIB)/camljava.jar fr/inria/caml/camljava/*.class
+	cp jni.cma jni.cmi $(wildcard jni.cmxa jni.a) libcamljni.a jni.mli camljava.jar $(CAMLJAVALIB)
 
 jni.cma: jni.cmo libcamljni.a
 	$(OCAMLC) -linkall -a -o jni.cma -custom jni.cmo \
@@ -39,6 +38,12 @@ clean::
 	rm -f jni.ml
 
 beforedepend:: jni.ml
+
+camljava.jar: javaclasses
+	jar cf camljava.jar fr/inria/caml/camljava/*.class
+
+clean::
+	rm -f camljava.jar
 
 javaclasses:
 	$(JAVAC) fr/inria/caml/camljava/*.java

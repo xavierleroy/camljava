@@ -51,12 +51,12 @@ static struct custom_operations jobject_ops = {
   custom_deserialize_default    /* TODO? use Java serialization intf */
 };
 
-static value alloc_jobject(jobject obj)
+static value caml_alloc_jobject(jobject obj)
 {
-  value v = alloc_custom(&jobject_ops, sizeof(jobject), 0, 1);
+  value v = caml_alloc_custom(&jobject_ops, sizeof(jobject), 0, 1);
   if (obj != NULL) {
     obj = (*jenv)->NewGlobalRef(jenv, obj);
-    if (obj == NULL) raise_out_of_memory();
+    if (obj == NULL) caml_raise_out_of_memory();
   }
   JObject(v) = obj;
   return v;
@@ -64,7 +64,7 @@ static value alloc_jobject(jobject obj)
 
 value camljava_GetNull(value unit)
 {
-  return alloc_jobject(NULL);
+  return caml_alloc_jobject(NULL);
 }
 
 value camljava_IsNull(value vobj)
@@ -98,11 +98,11 @@ static void check_java_exception(void)
     if (camljava_raise_exception == NULL) {
       camljava_raise_exception = caml_named_value("camljava_raise_exception");
       if (camljava_raise_exception == NULL)
-        invalid_argument("Java_lang not linked in");
+        caml_invalid_argument("Java_lang not linked in");
     }
-    vobj = alloc_jobject(exn);
+    vobj = caml_alloc_jobject(exn);
     (*jenv)->DeleteLocalRef(jenv, exn);
-    callback(*camljava_raise_exception, vobj);
+    caml_callback(*camljava_raise_exception, vobj);
   }
 }
 
@@ -113,9 +113,9 @@ static void check_non_null(value jobj)
   if (camljava_null_pointer == NULL) {
     camljava_null_pointer = caml_named_value("camljava_null_pointer");
     if (camljava_null_pointer == NULL)
-      invalid_argument("Java not linked in");
+      caml_invalid_argument("Java not linked in");
   }
-  raise_constant(*camljava_null_pointer);
+  caml_raise_constant(*camljava_null_pointer);
 }
 
 /*********** Class operations ************/
@@ -124,14 +124,14 @@ value camljava_FindClass(value vname)
 {
   jclass c = (*jenv)->FindClass(jenv, String_val(vname));
   if (c == NULL) check_java_exception();
-  return alloc_jobject(c);
+  return caml_alloc_jobject(c);
 }
 
 value camljava_GetSuperclass(value vclass)
 {
   jclass c = (*jenv)->GetSuperclass(jenv, JObject(vclass));
   if (c == NULL) check_java_exception();
-  return alloc_jobject(c);
+  return caml_alloc_jobject(c);
 }
 
 value camljava_IsAssignableFrom(value vclass1, value vclass2)
@@ -145,9 +145,9 @@ value camljava_IsAssignableFrom(value vclass1, value vclass2)
 
 #define JField(v) (*((jfieldID *) (v)))
 
-static value alloc_jfieldID(jfieldID id)
+static value caml_alloc_jfieldID(jfieldID id)
 {
-  value v = alloc((sizeof(jfieldID) + sizeof(value) - 1) / sizeof(value),
+  value v = caml_alloc((sizeof(jfieldID) + sizeof(value) - 1) / sizeof(value),
                   Abstract_tag);
   JField(v) = id;
   return v;
@@ -158,7 +158,7 @@ value camljava_GetFieldID(value vclass, value vname, value vsig)
   jfieldID id = (*jenv)->GetFieldID(jenv, JObject(vclass),
                                     String_val(vname), String_val(vsig));
   if (id == NULL) check_java_exception();
-  return alloc_jfieldID(id);
+  return caml_alloc_jfieldID(id);
 }
 
 value camljava_GetStaticFieldID(value vclass, value vname, value vsig)
@@ -166,7 +166,7 @@ value camljava_GetStaticFieldID(value vclass, value vname, value vsig)
   jfieldID id = (*jenv)->GetStaticFieldID(jenv, JObject(vclass),
                                           String_val(vname), String_val(vsig));
   if (id == NULL) check_java_exception();
-  return alloc_jfieldID(id);
+  return caml_alloc_jfieldID(id);
 }
 
 /*********** Field access *************/
@@ -180,15 +180,15 @@ value camljava_##name(value vobj, value vfield)                             \
   return resconv(res);                                                      \
 }
 
-GETFIELD(GetObjectField, jobject, alloc_jobject)
+GETFIELD(GetObjectField, jobject, caml_alloc_jobject)
 GETFIELD(GetBooleanField, jboolean, Val_jboolean)
 GETFIELD(GetByteField, jbyte, Val_int)
 GETFIELD(GetCharField, jchar, Val_int)
 GETFIELD(GetShortField, jshort, Val_int)
-GETFIELD(GetIntField, jint, copy_int32)
-GETFIELD(GetLongField, jlong, copy_int64)
-GETFIELD(GetFloatField, jfloat, copy_double)
-GETFIELD(GetDoubleField, jdouble, copy_double)
+GETFIELD(GetIntField, jint, caml_copy_int32)
+GETFIELD(GetLongField, jlong, caml_copy_int64)
+GETFIELD(GetFloatField, jfloat, caml_copy_double)
+GETFIELD(GetDoubleField, jdouble, caml_copy_double)
 
 value camljava_GetCamlintField(value vobj, value vfield)
 {
@@ -232,15 +232,15 @@ value camljava_##name(value vclass, value vfield)                             \
   return resconv(res);                                                        \
 }
 
-GETSTATICFIELD(GetStaticObjectField, jobject, alloc_jobject)
+GETSTATICFIELD(GetStaticObjectField, jobject, caml_alloc_jobject)
 GETSTATICFIELD(GetStaticBooleanField, jboolean, Val_jboolean)
 GETSTATICFIELD(GetStaticByteField, jbyte, Val_int)
 GETSTATICFIELD(GetStaticCharField, jchar, Val_int)
 GETSTATICFIELD(GetStaticShortField, jshort, Val_int)
-GETSTATICFIELD(GetStaticIntField, jint, copy_int32)
-GETSTATICFIELD(GetStaticLongField, jlong, copy_int64)
-GETSTATICFIELD(GetStaticFloatField, jfloat, copy_double)
-GETSTATICFIELD(GetStaticDoubleField, jdouble, copy_double)
+GETSTATICFIELD(GetStaticIntField, jint, caml_copy_int32)
+GETSTATICFIELD(GetStaticLongField, jlong, caml_copy_int64)
+GETSTATICFIELD(GetStaticFloatField, jfloat, caml_copy_double)
+GETSTATICFIELD(GetStaticDoubleField, jdouble, caml_copy_double)
 
 value camljava_GetStaticCamlintField(value vclass, value vfield)
 {
@@ -277,9 +277,9 @@ value camljava_SetStaticCamlintField(value vclass, value vfield, value vnewval)
 
 #define JMethod(v) (*((jmethodID *) (v)))
 
-static value alloc_jmethodID(jmethodID id)
+static value caml_alloc_jmethodID(jmethodID id)
 {
-  value v = alloc((sizeof(jmethodID) + sizeof(value) - 1) / sizeof(value),
+  value v = caml_alloc((sizeof(jmethodID) + sizeof(value) - 1) / sizeof(value),
                   Abstract_tag);
   JMethod(v) = id;
   return v;
@@ -290,7 +290,7 @@ value camljava_GetMethodID(value vclass, value vname, value vsig)
   jmethodID id = (*jenv)->GetMethodID(jenv, JObject(vclass),
                                       String_val(vname), String_val(vsig));
   if (id == NULL) check_java_exception();
-  return alloc_jmethodID(id);
+  return caml_alloc_jmethodID(id);
 }
 
 value camljava_GetStaticMethodID(value vclass, value vname, value vsig)
@@ -299,7 +299,7 @@ value camljava_GetStaticMethodID(value vclass, value vname, value vsig)
     (*jenv)->GetStaticMethodID(jenv, JObject(vclass),
                                String_val(vname), String_val(vsig));
   if (id == NULL) check_java_exception();
-  return alloc_jmethodID(id);
+  return caml_alloc_jmethodID(id);
 }
 
 /*************** The jvalue union ***************/
@@ -344,7 +344,7 @@ static jvalue * convert_args(value vargs, jvalue default_args[])
   if (nargs <= NUM_DEFAULT_ARGS)
     args = default_args;
   else
-    args = stat_alloc(nargs * sizeof(jvalue));
+    args = caml_stat_alloc(nargs * sizeof(jvalue));
   for (i = 0; i < nargs; i++) jvalue_val(Field(vargs, i), &(args[i]));
   return args;
 }
@@ -360,20 +360,20 @@ value camljava_##callname(value vobj, value vmeth, value vargs)             \
   check_non_null(vobj);                                                     \
   args = convert_args(vargs, default_args);                                 \
   res = (*jenv)->callname##A(jenv, JObject(vobj), JMethod(vmeth), args);    \
-  if (args != default_args) stat_free(args);                                \
+  if (args != default_args) caml_stat_free(args);                                \
   check_java_exception();                                                   \
   return resconv(res);                                                      \
 }
 
-CALLMETHOD(CallObjectMethod, jobject, alloc_jobject)
+CALLMETHOD(CallObjectMethod, jobject, caml_alloc_jobject)
 CALLMETHOD(CallBooleanMethod, jboolean, Val_jboolean)
 CALLMETHOD(CallByteMethod, jbyte, Val_int)
 CALLMETHOD(CallCharMethod, jchar, Val_int)
 CALLMETHOD(CallShortMethod, jshort, Val_int)
-CALLMETHOD(CallIntMethod, jint, copy_int32)
-CALLMETHOD(CallLongMethod, jlong, copy_int64)
-CALLMETHOD(CallFloatMethod, jfloat, copy_double)
-CALLMETHOD(CallDoubleMethod, jdouble, copy_double)
+CALLMETHOD(CallIntMethod, jint, caml_copy_int32)
+CALLMETHOD(CallLongMethod, jlong, caml_copy_int64)
+CALLMETHOD(CallFloatMethod, jfloat, caml_copy_double)
+CALLMETHOD(CallDoubleMethod, jdouble, caml_copy_double)
 
 value camljava_CallCamlintMethod(value vobj, value vmeth, value vargs)
 {
@@ -383,7 +383,7 @@ value camljava_CallCamlintMethod(value vobj, value vmeth, value vargs)
   check_non_null(vobj);
   args = convert_args(vargs, default_args);
   res = (*jenv)->CallIntMethodA(jenv, JObject(vobj), JMethod(vmeth), args);
-  if (args != default_args) stat_free(args);
+  if (args != default_args) caml_stat_free(args);
   check_java_exception();
   return Val_int(res);
 }
@@ -395,7 +395,7 @@ value camljava_CallVoidMethod(value vobj, value vmeth, value vargs)
   check_non_null(vobj);
   args = convert_args(vargs, default_args);
   (*jenv)->CallVoidMethodA(jenv, JObject(vobj), JMethod(vmeth), args);
-  if (args != default_args) stat_free(args);
+  if (args != default_args) caml_stat_free(args);
   check_java_exception();
   return Val_unit;
 }
@@ -407,20 +407,20 @@ value camljava_##callname(value vclass, value vmeth, value vargs)           \
   jvalue * args = convert_args(vargs, default_args);                        \
   restyp res =                                                              \
     (*jenv)->callname##A(jenv, JObject(vclass), JMethod(vmeth), args);      \
-  if (args != default_args) stat_free(args);                                \
+  if (args != default_args) caml_stat_free(args);                                \
   check_java_exception();                                                   \
   return resconv(res);                                                      \
 }
 
-CALLSTATICMETHOD(CallStaticObjectMethod, jobject, alloc_jobject)
+CALLSTATICMETHOD(CallStaticObjectMethod, jobject, caml_alloc_jobject)
 CALLSTATICMETHOD(CallStaticBooleanMethod, jboolean, Val_int)
 CALLSTATICMETHOD(CallStaticByteMethod, jbyte, Val_int)
 CALLSTATICMETHOD(CallStaticCharMethod, jchar, Val_int)
 CALLSTATICMETHOD(CallStaticShortMethod, jshort, Val_int)
-CALLSTATICMETHOD(CallStaticIntMethod, jint, copy_int32)
-CALLSTATICMETHOD(CallStaticLongMethod, jlong, copy_int64)
-CALLSTATICMETHOD(CallStaticFloatMethod, jfloat, copy_double)
-CALLSTATICMETHOD(CallStaticDoubleMethod, jdouble, copy_double)
+CALLSTATICMETHOD(CallStaticIntMethod, jint, caml_copy_int32)
+CALLSTATICMETHOD(CallStaticLongMethod, jlong, caml_copy_int64)
+CALLSTATICMETHOD(CallStaticFloatMethod, jfloat, caml_copy_double)
+CALLSTATICMETHOD(CallStaticDoubleMethod, jdouble, caml_copy_double)
 
 value camljava_CallStaticCamlintMethod(value vclass, value vmeth, value vargs)
 {
@@ -428,7 +428,7 @@ value camljava_CallStaticCamlintMethod(value vclass, value vmeth, value vargs)
   jvalue * args = convert_args(vargs, default_args);
   jint res =
     (*jenv)->CallStaticIntMethodA(jenv, JObject(vclass), JMethod(vmeth), args);
-  if (args != default_args) stat_free(args);
+  if (args != default_args) caml_stat_free(args);
   check_java_exception();
   return Val_int(res);
 }
@@ -438,7 +438,7 @@ value camljava_CallStaticVoidMethod(value vclass, value vmeth, value vargs)
   jvalue default_args[NUM_DEFAULT_ARGS];
   jvalue * args = convert_args(vargs, default_args);
   (*jenv)->CallStaticVoidMethodA(jenv, JObject(vclass), JMethod(vmeth), args);
-  if (args != default_args) stat_free(args);
+  if (args != default_args) caml_stat_free(args);
   check_java_exception();
   return Val_unit;
 }
@@ -453,20 +453,20 @@ value camljava_##callname(value vobj, value vclass, value vmeth, value vargs)\
   args = convert_args(vargs, default_args);                                 \
   res = (*jenv)->callname##A(jenv, JObject(vobj), JObject(vclass),          \
                              JMethod(vmeth), args);                         \
-  if (args != default_args) stat_free(args);                                \
+  if (args != default_args) caml_stat_free(args);                                \
   check_java_exception();                                                   \
   return resconv(res);                                                      \
 }
 
-CALLNONVIRTUALMETHOD(CallNonvirtualObjectMethod, jobject, alloc_jobject)
+CALLNONVIRTUALMETHOD(CallNonvirtualObjectMethod, jobject, caml_alloc_jobject)
 CALLNONVIRTUALMETHOD(CallNonvirtualBooleanMethod, jboolean, Val_int)
 CALLNONVIRTUALMETHOD(CallNonvirtualByteMethod, jbyte, Val_int)
 CALLNONVIRTUALMETHOD(CallNonvirtualCharMethod, jchar, Val_int)
 CALLNONVIRTUALMETHOD(CallNonvirtualShortMethod, jshort, Val_int)
-CALLNONVIRTUALMETHOD(CallNonvirtualIntMethod, jint, copy_int32)
-CALLNONVIRTUALMETHOD(CallNonvirtualLongMethod, jlong, copy_int64)
-CALLNONVIRTUALMETHOD(CallNonvirtualFloatMethod, jfloat, copy_double)
-CALLNONVIRTUALMETHOD(CallNonvirtualDoubleMethod, jdouble, copy_double)
+CALLNONVIRTUALMETHOD(CallNonvirtualIntMethod, jint, caml_copy_int32)
+CALLNONVIRTUALMETHOD(CallNonvirtualLongMethod, jlong, caml_copy_int64)
+CALLNONVIRTUALMETHOD(CallNonvirtualFloatMethod, jfloat, caml_copy_double)
+CALLNONVIRTUALMETHOD(CallNonvirtualDoubleMethod, jdouble, caml_copy_double)
 
 value camljava_CallNonvirtualCamlintMethod(value vobj, value vclass,
                                            value vmeth, value vargs)
@@ -478,7 +478,7 @@ value camljava_CallNonvirtualCamlintMethod(value vobj, value vclass,
   args = convert_args(vargs, default_args);
   res = (*jenv)->CallNonvirtualIntMethodA(jenv, JObject(vobj), JObject(vclass),
                                           JMethod(vmeth), args);
-  if (args != default_args) stat_free(args);
+  if (args != default_args) caml_stat_free(args);
   check_java_exception();
   return Val_int(res);
 }
@@ -492,7 +492,7 @@ value camljava_CallNonvirtualVoidMethod(value vobj, value vclass,
   args = convert_args(vargs, default_args);
   (*jenv)->CallNonvirtualVoidMethodA(jenv, JObject(vobj), JObject(vclass),
                                      JMethod(vmeth), args);
-  if (args != default_args) stat_free(args);
+  if (args != default_args) caml_stat_free(args);
   check_java_exception();
   return Val_unit;
 }
@@ -507,7 +507,7 @@ static value camljava_null_string;
 value camljava_RegisterNullString(value null_string)
 {
   camljava_null_string = null_string;
-  register_global_root(&camljava_null_string);
+  caml_register_global_root(&camljava_null_string);
   return Val_unit;
 }
 
@@ -520,7 +520,7 @@ value camljava_MakeJavaString (value vstr)
     jstr = (*jenv)->NewStringUTF(jenv, String_val(vstr));
     if (jstr == NULL) check_java_exception();
   }
-  return alloc_jobject(jstr);
+  return caml_alloc_jobject(jstr);
 }
 
 /* Automatically convert Java string to Caml string?
@@ -541,7 +541,7 @@ static value extract_java_string (JNIEnv * env, jstring jstr)
 
   if (jstr == NULL) return camljava_null_string;
   len = (*env)->GetStringUTFLength(env, jstr);
-  res = alloc_string(len);
+  res = caml_alloc_string(len);
   chrs = (*env)->GetStringUTFChars(env, jstr, &isCopy);
   memcpy(String_val(res), chrs, len);
   (*env)->ReleaseStringUTFChars(env, jstr, chrs);
@@ -574,7 +574,7 @@ value camljava_NewObjectArray(value vsize, value vclass)
     (*jenv)->NewObjectArray(jenv, Int_val(vsize), 
                            (jclass) JObject(vclass), NULL);
   if (arr == NULL) check_java_exception();
-  return alloc_jobject(arr);
+  return caml_alloc_jobject(arr);
 }
 
 value camljava_GetObjectArrayElement(value varray, value vidx)
@@ -584,7 +584,7 @@ value camljava_GetObjectArrayElement(value varray, value vidx)
   res = (*jenv)->GetObjectArrayElement(jenv, (jobjectArray) JObject(varray),
                                        Int_val(vidx));
   check_java_exception();
-  return alloc_jobject(res);
+  return caml_alloc_jobject(res);
 }
 
 value camljava_SetObjectArrayElement(value varray, value vidx, value vnewval)
@@ -601,7 +601,7 @@ value camljava_New##name##Array(value vsize)                                  \
 {                                                                             \
   array_typ arr = (*jenv)->New##name##Array(jenv, Int_val(vsize));            \
   if (arr == NULL) check_java_exception();                                    \
-  return alloc_jobject(arr);                                                  \
+  return caml_alloc_jobject(arr);                                                  \
 }                                                                             \
                                                                               \
 value camljava_Get##name##ArrayElement(value varray, value vidx)              \
@@ -630,10 +630,10 @@ ARRAYNEWGETSET(Boolean, jbooleanArray, jboolean, Jboolean_val, Val_jboolean)
 ARRAYNEWGETSET(Byte, jbyteArray, jbyte, Int_val, Val_int)
 ARRAYNEWGETSET(Char, jcharArray, jchar, Int_val, Val_int)
 ARRAYNEWGETSET(Short, jshortArray, jshort, Int_val, Val_int)
-ARRAYNEWGETSET(Int, jintArray, jint, Int32_val, copy_int32)
-ARRAYNEWGETSET(Long, jlongArray, jlong, Int64_val, copy_int64)
-ARRAYNEWGETSET(Float, jfloatArray, jfloat, Double_val, copy_double)
-ARRAYNEWGETSET(Double, jdoubleArray, jdouble, Double_val, copy_double)
+ARRAYNEWGETSET(Int, jintArray, jint, Int32_val, caml_copy_int32)
+ARRAYNEWGETSET(Long, jlongArray, jlong, Int64_val, caml_copy_int64)
+ARRAYNEWGETSET(Float, jfloatArray, jfloat, Double_val, caml_copy_double)
+ARRAYNEWGETSET(Double, jdoubleArray, jdouble, Double_val, caml_copy_double)
 
 value camljava_GetCamlintArrayElement(value varray, value vidx)
 {
@@ -665,8 +665,8 @@ value camljava_GetByteArrayRegion(value varray, value vsrcidx,
   long length = Long_val(vlength);
 
   check_non_null(varray);
-  if (dstidx < 0 || length < 0 || dstidx + length > string_length(vstr))
-    invalid_argument("Jni.get_byte_array_region");
+  if (dstidx < 0 || length < 0 || dstidx + length > caml_string_length(vstr))
+    caml_invalid_argument("Jni.get_byte_array_region");
   (*jenv)->GetByteArrayRegion(jenv, (jbyteArray) JObject(varray),
                               srcidx, length, (jbyte *) &Byte(vstr, dstidx));
   check_java_exception();
@@ -682,8 +682,8 @@ value camljava_SetByteArrayRegion(value vstr, value vsrcidx,
   long length = Long_val(vlength);
 
   check_non_null(varray);
-  if (srcidx < 0 || length < 0 || srcidx + length > string_length(vstr))
-    invalid_argument("Jni.set_byte_array_region");
+  if (srcidx < 0 || length < 0 || srcidx + length > caml_string_length(vstr))
+    caml_invalid_argument("Jni.set_byte_array_region");
   (*jenv)->SetByteArrayRegion(jenv, (jbyteArray) JObject(varray),
                               dstidx, length, (jbyte *) &Byte(vstr, srcidx));
   check_java_exception();
@@ -702,7 +702,7 @@ value camljava_Init(value vclasspath)
 
   /* Set the class path */
   classpath = 
-    stat_alloc(strlen(setclasspath) + string_length(vclasspath) + 1);
+    caml_stat_alloc(strlen(setclasspath) + caml_string_length(vclasspath) + 1);
   strcpy(classpath, setclasspath);
   strcat(classpath, String_val(vclasspath));
   options[0].optionString = classpath;
@@ -712,8 +712,8 @@ value camljava_Init(value vclasspath)
   vm_args.ignoreUnrecognized = 1;
   /* Load and initialize a Java VM, return a JNI interface pointer in env */
   retcode = JNI_CreateJavaVM(&jvm, (void **) &jenv, &vm_args);
-  stat_free(classpath);
-  if (retcode < 0) failwith("Java.init");
+  caml_stat_free(classpath);
+  if (retcode < 0) caml_failwith("Java.init");
   init_threading(); // by O'Jacare
   return Val_unit;
 }
@@ -730,7 +730,7 @@ value camljava_AllocObject(value vclass)
 {
   jobject res = (*jenv)->AllocObject(jenv, JObject(vclass));
   if (res == NULL) check_java_exception();
-  return alloc_jobject(res);
+  return caml_alloc_jobject(res);
 }
 
 value camljava_GetObjectClass(value vobj)
@@ -739,7 +739,7 @@ value camljava_GetObjectClass(value vobj)
   check_non_null(vobj);
   cls = (*jenv)->GetObjectClass(jenv, JObject(vobj));
   if (cls == NULL) check_java_exception();
-  return alloc_jobject(cls);
+  return caml_alloc_jobject(cls);
 }
 
 value camljava_IsInstanceOf(value vobj, value vclass)
@@ -845,7 +845,7 @@ static value camljava_callback(JNIEnv * env,
     for (i = 1; i < n; i++) {
       arg = (*env)->GetObjectArrayElement(env, jargs, i - 1);
       if (arg == NULL)
-        carg = alloc_jobject(arg);
+        carg = caml_alloc_jobject(arg);
       else if ((*env)->IsInstanceOf(env, arg, caml_boolean))
         carg = Val_jboolean((*env)->GetBooleanField(env, arg,
                                                     caml_boolean_contents));
@@ -856,28 +856,28 @@ static value camljava_callback(JNIEnv * env,
       else if ((*env)->IsInstanceOf(env, arg, caml_short))
         carg = Val_int((*env)->GetShortField(env, arg, caml_short_contents));
       else if ((*env)->IsInstanceOf(env, arg, caml_int))
-        carg = copy_int32((*env)->GetIntField(env, arg, caml_int_contents));
+        carg = caml_copy_int32((*env)->GetIntField(env, arg, caml_int_contents));
       else if ((*env)->IsInstanceOf(env, arg, caml_camlint))
         carg = Val_int((*env)->GetIntField(env, arg, caml_camlint_contents));
       else if ((*env)->IsInstanceOf(env, arg, caml_long))
-        carg = copy_int64((*env)->GetLongField(env, arg,
+        carg = caml_copy_int64((*env)->GetLongField(env, arg,
                                                caml_long_contents));
       else if ((*env)->IsInstanceOf(env, arg, caml_float))
-        carg = copy_double((*env)->GetFloatField(env, arg,
+        carg = caml_copy_double((*env)->GetFloatField(env, arg,
                                                  caml_float_contents));
       else if ((*env)->IsInstanceOf(env, arg, caml_double))
-        carg = copy_double((*env)->GetDoubleField(env, arg,
+        carg = caml_copy_double((*env)->GetDoubleField(env, arg,
                                                 caml_double_contents));
       else if (string_auto_conv
 	       && (*env)->IsInstanceOf(env, arg, java_lang_string))
         carg = extract_java_string(env, (jstring) arg);
       else
-        carg = alloc_jobject(arg);
+        carg = caml_alloc_jobject(arg);
       cargs[i] = carg;
     }
   End_roots();
   clos = caml_get_public_method(cargs[0], (value) method_id);
-  res = callbackN_exn(clos, n, cargs);
+  res = caml_callbackN_exn(clos, n, cargs);
   free(cargs);
   jenv = savedenv;
   return res;
@@ -928,17 +928,17 @@ CALLBACK(Object, jobject, JObject)
 
 value camljava_WrapCamlObject(value vobj)
 {
-  value * wrapper = stat_alloc(sizeof(value));
+  value * wrapper = caml_stat_alloc(sizeof(value));
   *wrapper = vobj;
-  register_global_root(wrapper);
-  return copy_int64((jlong) (value) wrapper);
+  caml_register_global_root(wrapper);
+  return caml_copy_int64((jlong) (value) wrapper);
 }
 
 void camljava_FreeWrapper(JNIEnv * env, jclass cls, jlong wrapper)
 {
   value * w = (value *) (value) wrapper;
-  remove_global_root(w);
-  stat_free(w);
+  caml_remove_global_root(w);
+  caml_stat_free(w);
 }
 
 jlong camljava_GetCamlMethodID(JNIEnv * env, jclass cls, jstring jname)

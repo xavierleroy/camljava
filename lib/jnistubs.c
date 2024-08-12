@@ -507,7 +507,7 @@ static value camljava_null_string;
 value camljava_RegisterNullString(value null_string)
 {
   camljava_null_string = null_string;
-  caml_register_global_root(&camljava_null_string);
+  caml_register_generational_global_root(&camljava_null_string);
   return Val_unit;
 }
 
@@ -543,7 +543,7 @@ static value extract_java_string (JNIEnv * env, jstring jstr)
   len = (*env)->GetStringUTFLength(env, jstr);
   res = caml_alloc_string(len);
   chrs = (*env)->GetStringUTFChars(env, jstr, &isCopy);
-  memcpy(String_val(res), chrs, len);
+  memcpy(&Byte(res, 0), chrs, len);
   (*env)->ReleaseStringUTFChars(env, jstr, chrs);
   return res;
 }
@@ -930,14 +930,14 @@ value camljava_WrapCamlObject(value vobj)
 {
   value * wrapper = caml_stat_alloc(sizeof(value));
   *wrapper = vobj;
-  caml_register_global_root(wrapper);
+  caml_register_generational_global_root(wrapper);
   return caml_copy_int64((jlong) (value) wrapper);
 }
 
 void camljava_FreeWrapper(JNIEnv * env, jclass cls, jlong wrapper)
 {
   value * w = (value *) (value) wrapper;
-  caml_remove_global_root(w);
+  caml_remove_generational_global_root(w);
   caml_stat_free(w);
 }
 

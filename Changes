@@ -1,3 +1,8 @@
+Version 0.5, 2024-08-13
+- Compatibility with OCaml 5.0 and up (#3)
+- For OCaml root registration, use the more efficient generational API
+- Update Makefile.config to OpenJDK 17 for Linux/AMD64
+
 Version 0.4, 2020-03-01
 - Add NewGlobalRef registration for classes involved in callbacks (#2)
 - Compatibility with OCaml 4.09 and up

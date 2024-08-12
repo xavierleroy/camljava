@@ -980,19 +980,3 @@ value camljava_RegisterNatives(value unit)
                            sizeof(camljava_natives) / sizeof(JNINativeMethod));
   return Val_unit;
 }
-
-/********************* OS-specific hacks ************************/
-
-#ifdef JDK122_LINUX_HACK
-
-#include <setjmp.h>
-
-extern void __libc_siglongjmp (sigjmp_buf env, int val)
-     __attribute__ ((noreturn));
-
-void siglongjmp(sigjmp_buf env, int val)
-{
-  __libc_siglongjmp(env, val);
-}
-
-#endif
